@@ -15,18 +15,23 @@ test('Koishi auto dispatch, errors, and text escaping', async () => {
     const client = app.mock.client('tester')
     const usage = help(plugin.Config({}))
     await client.shouldReply('/dice [-100,-100]', '区间 [-100,-100] 的结果是 -100！')
-    await client.shouldReply('/dice 3d1+1', '3d1[1, 1, 1] + 1 = 4')
+    await client.shouldReply('/dice D4', /^1d4\[[1-4]\] = [1-4]$/)
     await client.shouldReply('/dice do it & do not', /^结果是 (do it|do not) !$/)
     await client.shouldReply('/dice 3d10+1 & 2d6+1d4-2', /^结果是 (3d10\+1|2d6\+1d4-2) !$/)
     await client.shouldReply('/dice `3d10+1`  & `2d6+1d4-2`', /^结果是 `(3d10\+1|2d6\+1d4-2)` !$/)
     await client.shouldReply('/dice D0 & D6', /^结果是 (D0|D6) !$/)
-    await client.shouldReply('/dice a & b & c', `二选一格式错误：需要且只能有一个半角 &，左右选项均不能为空。\n\n${usage}`)
-    await client.shouldReply('/dice a &', `二选一格式错误：需要且只能有一个半角 &，左右选项均不能为空。\n\n${usage}`)
-    await client.shouldReply('/dice [20,0]', `区间下限不能大于上限。\n\n${usage}`)
+    await client.shouldReply('/dice a & b & c', '格式错误。正确格式为 dice 选项一 & 选项二')
+    await client.shouldReply('/dice a &', '格式错误。正确格式为 dice 选项一 & 选项二')
+    await client.shouldReply('/dice [20,0]', '区间下限不能大于上限。')
     await client.shouldReply('/dice', usage)
     await client.shouldReply('/dice help', usage)
     await client.shouldReply('/dice HELP', usage)
     await client.shouldReply('/dice help & help', '结果是 help !')
+    await client.shouldReply('/dice [0 20]', '格式错误。正确格式为 dice [下限,上限]')
+    await client.shouldReply('/dice 3d6++1', '格式错误。正确格式为 dice 数量d面数±修正值')
+    await client.shouldReply('/dice hello', '格式错误。正确格式为：\ndice [下限,上限]\ndice 数量d面数±修正值\ndice 选项一 & 选项二')
+    await client.shouldReply('/dice D11', '不支持该骰子面数。支持的面数：D4、D6、D8、D10、D12、D20、D100。')
+    await client.shouldReply('/dice ' + 'x'.repeat(501), '输入不能超过 500 个字符。')
     const original = client.bot.sendMessage
     let sent
     client.bot.sendMessage = function (channel, fragment, ...args) {
@@ -46,11 +51,16 @@ test('custom English command and limits', async () => {
   await app.start()
   try {
     const client = app.mock.client('tester')
-    await client.shouldReply('!roll D1', '1d1[1] = 1')
+    await client.shouldReply('!roll D4', /^1d4\[[1-4]\] = [1-4]$/)
     await client.shouldReply('!roll 好 & 好', '结果是 好 !')
     const usage = help(plugin.Config({ command: 'roll', maxDice: 2 }))
-    await client.shouldReply('!roll 3d6', `骰子数量必须在 1 到 2 之间。\n\n${usage}`)
+    await client.shouldReply('!roll 3d6', '骰子数量必须在 1 到 2 之间。')
     await client.shouldReply('!roll help', usage)
+    await client.shouldReply('!roll 3d6++', '骰子数量必须在 1 到 2 之间。')
+    await client.shouldReply('!roll D6+', '格式错误。正确格式为 roll 数量d面数±修正值')
+    await client.shouldReply('!roll [0,', '格式错误。正确格式为 roll [下限,上限]')
+    await client.shouldReply('!roll a &', '格式错误。正确格式为 roll 选项一 & 选项二')
+    assert.ok(!usage.includes('D11') && !usage.includes('maxSides'))
   } finally { await botScope.dispose(); await app.stop() }
 })
 
@@ -67,7 +77,7 @@ test('quoted replies and serialized entity text from adapters', async () => {
     await client.shouldReply(h.text('/dice 吃火鸡面 & 吃饺子&#x20;').toString(), expected)
     await client.shouldReply(h.text('/dice 吃火鸡面 &amp; 吃饺子').toString(), expected)
     await client.shouldReply(h.text('/dice &#x20;').toString(), help(plugin.Config({})))
-    await client.shouldReply(h.text('/dice D6 &amp; D20 &amp; D100').toString(), /^二选一格式错误：[\s\S]*使用方法/)
+    await client.shouldReply(h.text('/dice D6 &amp; D20 &amp; D100').toString(), '格式错误。正确格式为 dice 选项一 & 选项二')
     const original = client.bot.sendMessage
     let sent
     client.bot.sendMessage = function (channel, fragment, ...args) {

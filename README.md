@@ -2,7 +2,7 @@
 
 ## Secure Dice 骰娘
 
-生成闭区间随机整数、投掷自定义面数骰子，或从用户提供的两个选项中等概率选择一个。无需数据库或 API 密钥。
+生成闭区间随机整数、投掷常见面数骰子，或从用户提供的两个选项中等概率选择一个。无需数据库或 API 密钥。
 
 ### 命令语法
 
@@ -18,7 +18,7 @@
 ### 参数与示例
 
 - **区间**：方括号和逗号是实际语法。例如 `dice [-100,100]`，可按需替换两个端点。
-- **骰子**：D 不区分大小写，面数不限于常见类型。`dice D11` 表示一颗十一面骰；`dice 3d10+1` 表示三颗十面骰求和后加 1；`dice 2d6+1d4-2` 可组合不同骰子。
+- **骰子**：支持 D4、D6、D8、D10、D12、D20、D100，D 不区分大小写。数量省略时为 1；修正值可省略；支持多组骰子加减。
 - **选项**：中文、英文和带空格的短语均可，例如 `dice 吃火鸡面 & 吃饺子`。恰好使用一个半角 `&`；含 `&` 时两边均按文本选择，不执行骰子表达式。
 
 ### 限制与配置
@@ -27,7 +27,6 @@
 | --- | --- | --- |
 | `command` | `dice` | 主命令名；修改后帮助随之更新 |
 | `maxDice` | 100 | 单次骰子总数上限，可设 1～100 |
-| `maxSides` | 1000000 | 骰子面数上限，可设 1～1000000 |
 | `maxInputLength` | 500 | 输入长度上限，可设 20～1000 |
 
 区间端点与单项修正值的绝对值不超过 1000000000。暂不支持小数、乘除、括号运算、爆骰或取最高/最低。全局调用前缀及群聊 @ 要求由 Koishi 设置决定。
@@ -41,13 +40,13 @@
 这是本地插件包，尚未发布到 npm。源码是可直接运行的 CommonJS，无需编译。
 
 在本目录执行 `npm install`、`npm test`、`npm run check` 和 `npm pack`。
-将生成的 `koishi-plugin-secure-dice-0.1.1.tgz` 上传至 Koishi 项目目录；在该项目目录内执行：
+将生成的 `koishi-plugin-secure-dice-0.1.2.tgz` 上传至 Koishi 项目目录；在该项目目录内执行：
 
 ```sh
-npm install ./koishi-plugin-secure-dice-0.1.1.tgz
+npm install ./koishi-plugin-secure-dice-0.1.2.tgz
 ```
 
-若宿主使用 Yarn，请使用 `yarn add ./koishi-plugin-secure-dice-0.1.1.tgz`，保持宿主包管理器一致。
+若宿主使用 Yarn，请使用 `yarn add ./koishi-plugin-secure-dice-0.1.2.tgz`，保持宿主包管理器一致。
 随后在 Koishi 控制台添加并启用 `secure-dice` 插件；必要时重启 Koishi 以刷新插件列表。
 已有 YAML 配置也可在现有 `plugins` 下添加（不要覆盖其它插件）：
 
@@ -56,7 +55,6 @@ plugins:
   secure-dice:
     command: dice
     maxDice: 100
-    maxSides: 1000000
     maxInputLength: 500
 ```
 
@@ -68,6 +66,11 @@ plugins:
 随机数使用 Node.js crypto.randomInt；无 eval、无外部随机数服务。出现随机源错误时返回错误提示，不降级为弱随机源。
 
 ## 更新记录
+
+### 0.1.2
+
+- 格式错误按类别显示简短提示，具体错误只显示原因；完整帮助由 dice 或 dice help 提供。
+- 骰子面数限定为 D4、D6、D8、D10、D12、D20、D100，取消自定义面数及 maxSides 配置。
 
 ### 0.1.1
 
