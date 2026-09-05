@@ -25,7 +25,6 @@
 
 | 配置项 | 默认值 | 说明 |
 | --- | --- | --- |
-| `command` | `dice` | 主命令名；修改后帮助随之更新 |
 | `maxDice` | 100 | 单次骰子总数上限，可设 1～100 |
 | `maxInputLength` | 500 | 输入长度上限，可设 20～1000 |
 
@@ -53,7 +52,6 @@ npm install ./koishi-plugin-secure-dice-0.1.2.tgz
 ```yaml
 plugins:
   secure-dice:
-    command: dice
     maxDice: 100
     maxInputLength: 500
 ```

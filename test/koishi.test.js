@@ -44,22 +44,24 @@ test('Koishi auto dispatch, errors, and text escaping', async () => {
   } finally { await botScope.dispose(); await app.stop() }
 })
 
-test('custom English command and limits', async () => {
+test('native command alias and limits', async () => {
   const app = new App({ prefix: '!', delay: { character: 0, message: 0 } })
   const botScope = app.plugin(mock)
-  app.plugin(plugin, { command: 'roll', maxDice: 2 })
+  app.plugin(plugin, { maxDice: 2 })
+  app.command('dice').alias('roll')
   await app.start()
   try {
     const client = app.mock.client('tester')
-    await client.shouldReply('!roll D4', /^1d4\[[1-4]\] = [1-4]$/)
-    await client.shouldReply('!roll 好 & 好', '结果是 好 !')
-    const usage = help(plugin.Config({ command: 'roll', maxDice: 2 }))
-    await client.shouldReply('!roll 3d6', '骰子数量必须在 1 到 2 之间。')
-    await client.shouldReply('!roll help', usage)
-    await client.shouldReply('!roll 3d6++', '骰子数量必须在 1 到 2 之间。')
-    await client.shouldReply('!roll D6+', '格式错误。正确格式为 roll 数量d面数±修正值')
-    await client.shouldReply('!roll [0,', '格式错误。正确格式为 roll [下限,上限]')
-    await client.shouldReply('!roll a &', '格式错误。正确格式为 roll 选项一 & 选项二')
+    await client.shouldReply('!dice D4', /^1d4\[[1-4]\] = [1-4]$/)
+    await client.shouldReply('!dice 好 & 好', '结果是 好 !')
+    await client.shouldReply('!roll [5,5]', '区间 [5,5] 的结果是 5！')
+    const usage = help(plugin.Config({ maxDice: 2 }))
+    await client.shouldReply('!dice 3d6', '骰子数量必须在 1 到 2 之间。')
+    await client.shouldReply('!dice help', usage)
+    await client.shouldReply('!dice 3d6++', '骰子数量必须在 1 到 2 之间。')
+    await client.shouldReply('!dice D6+', '格式错误。正确格式为 dice 数量d面数±修正值')
+    await client.shouldReply('!dice [0,', '格式错误。正确格式为 dice [下限,上限]')
+    await client.shouldReply('!dice a &', '格式错误。正确格式为 dice 选项一 & 选项二')
     assert.ok(!usage.includes('D11') && !usage.includes('maxSides'))
   } finally { await botScope.dispose(); await app.stop() }
 })
