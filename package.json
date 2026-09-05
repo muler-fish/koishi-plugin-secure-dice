@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-secure-dice",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "密码学安全骰娘：闭区间随机整数、骰子表达式与二元判断",
   "main": "lib/index.js",
   "files": [
