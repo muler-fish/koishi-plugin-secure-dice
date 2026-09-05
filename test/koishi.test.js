@@ -6,6 +6,24 @@ const mock = require('@koishijs/plugin-mock').default
 const plugin = require('../lib')
 const { help } = require('../lib/help')
 
+test('successful operations share cooldown; help and failed input do not consume it', async () => {
+  const app = new App({ prefix: '/', delay: { character: 0, message: 0 } })
+  const botScope = app.plugin(mock)
+  app.plugin(plugin, { cooldownSeconds: 10 })
+  await app.start()
+  try {
+    const alice = app.mock.client('alice')
+    const bob = app.mock.client('bob')
+    await alice.shouldReply('/dice D11', '不支持该骰子面数。支持的面数：D4、D6、D8、D10、D12、D20、D100。')
+    await alice.shouldReply('/dice help', help(plugin.Config({ cooldownSeconds: 10 })))
+    await alice.shouldReply('/dice [5,5]', '区间 [5,5] 的结果是 5！')
+    await alice.shouldReply('/dice D6', /^冷却中，请在 \d+ 秒后再试。$/)
+    await alice.shouldReply('/dice a & b', /^冷却中，请在 \d+ 秒后再试。$/)
+    await alice.shouldReply('/dice help', help(plugin.Config({ cooldownSeconds: 10 })))
+    await bob.shouldReply('/dice [5,5]', '区间 [5,5] 的结果是 5！')
+  } finally { await botScope.dispose(); await app.stop() }
+})
+
 test('Koishi auto dispatch, errors, and text escaping', async () => {
   const app = new App({ prefix: '/', delay: { character: 0, message: 0 } })
   const botScope = app.plugin(mock)
