@@ -38,18 +38,41 @@ test('reject invalid input before drawing', () => {
   }
   assert.throws(() => roll('3d6', { maxDice: 2 }), InputError)
 })
-test('binary choice maps the two equally sized outcomes and retains spaces', () => {
-  for (const [index, expected] of [[0, 'do it'], [1, 'do not']]) {
-    assert.equal(choose(' do it & do not ', {}, (a, b) => {
-      assert.equal(a, 0); assert.equal(b, 2); return index
-    }), `结果是 ${expected} !`)
+test('choice maps every equal-probability index and retains spaces and duplicate entries', () => {
+  for (const choices of [
+    ['do it', 'do not'],
+    ['真', '假', '不知道'],
+    ['吃火鸡面', '吃饺子', '吃面条', '吃米饭'],
+    Array.from({ length: 12 }, (_, index) => `选项 ${index + 1}`),
+    ['重复', '重复', '其他'],
+    ['`3d10+1`', '`2d6+1d4-2`', 'D0', '[20,0]'],
+  ]) {
+    for (const [index, expected] of choices.entries()) {
+      let draws = 0
+      assert.equal(choose(` ${choices.join(' & ')} `, {}, (a, b) => {
+        draws++
+        assert.equal(a, 0); assert.equal(b, choices.length); return index
+      }), `结果是 ${expected} !`)
+      assert.equal(draws, 1)
+    }
   }
-  for (const value of ['', 'do', 'do &', '& no', 'a & b & c']) assert.throws(() => choose(value), InputError)
+})
+test('choice rejects missing or empty options and excessive length before drawing', () => {
+  for (const value of ['', 'do', 'do &', '& no', 'a && b', 'a & \t & b', 'a & b & c &', '& a & b & c', '&']) {
+    assert.throws(() => choose(value, {}, () => assert.fail('must not draw')), InputError, value)
+  }
+  const boundary = `${'x'.repeat(498)}&z`
+  assert.equal(choose(boundary, {}, (a, b) => b - 1), '结果是 z !')
+  assert.throws(() => choose(`${boundary}z`, {}, () => assert.fail('must not draw')),
+    { message: '输入不能超过 500 个字符。' })
+  assert.equal(choose('a&b&c&d', { maxInputLength: 7 }, a => a), '结果是 a !')
+  assert.throws(() => choose('a&b&c&de', { maxInputLength: 7 }, () => assert.fail('must not draw')),
+    { message: '输入不能超过 7 个字符。' })
 })
 test('real crypto source smoke test (not a statistical proof)', () => {
   for (let i = 0; i < 50; i++) {
     assert.match(roll('[0,1]'), /结果是 [01]！$/)
     assert.match(roll('D6'), /^1d6\[[1-6]\] = [1-6]$/)
-    assert.match(choose('yes & no'), /^结果是 (yes|no) !$/)
+    assert.match(choose('yes & no & maybe & later'), /^结果是 (yes|no|maybe|later) !$/)
   }
 })
