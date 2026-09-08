@@ -1,6 +1,6 @@
 {
   "name": "koishi-plugin-secure-dice",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "description": "密码学安全骰娘：闭区间随机整数、骰子表达式与多选一",
   "main": "lib/index.js",
   "files": [
@@ -30,7 +30,7 @@
   ],
   "koishi": {
     "description": {
-      "zh": "安全随机骰娘，支持区间、常见面数骰子和多选一"
+      "zh": "随机骰娘，支持区间、常见面数骰子和多选一"
     }
   }
 }
